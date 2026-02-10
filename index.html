@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RunRelay — We Get Things Done</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ========== MODAL FORM ========== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 40px; width: 90%; max-width: 480px;
+  position: relative;
+  animation: modalIn 0.25s ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none; color: var(--text-muted);
+  font-size: 24px; cursor: pointer; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; transition: var(--transition);
+}
+.modal-close:hover { background: var(--bg-primary); color: var(--text-primary); }
+.modal h3 {
+  font-size: 22px; font-weight: 700; margin-bottom: 4px;
+}
+.modal .modal-sub {
+  font-size: 14px; color: var(--text-muted); margin-bottom: 28px;
+}
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 12px 16px;
+  background: var(--bg-primary); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary);
+  font-family: var(--font); font-size: 14px;
+  transition: var(--transition); outline: none;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.form-group input::placeholder, .form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+.form-group select { cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239090A8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.form-group select option { background: var(--bg-card); color: var(--text-primary); }
+.form-submit {
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm);
+  background: var(--accent); color: #0A0A0F;
+  font-family: var(--font); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: var(--transition); margin-top: 8px;
+}
+.form-submit:hover { box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-1px); }
+.form-success {
+  display: none; text-align: center; padding: 20px 0;
+}
+.form-success.active { display: block; }
+.form-success .check {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--accent-dim); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin: 0 auto 16px;
+}
+.form-success h4 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.form-success p { font-size: 14px; color: var(--text-secondary); }
+
+/* ========== RESET & VARIABLES ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+–bg-primary: #0A0A0F;
+–bg-secondary: #111118;
+–bg-card: #16161E;
+–bg-card-hover: #1C1C26;
+–border: #222230;
+–border-light: #2A2A3A;
+–text-primary: #F0F0F5;
+–text-secondary: #9090A8;
+–text-muted: #606078;
+–accent: #00E59A;
+–accent-dim: rgba(0, 229, 154, 0.12);
+–accent-glow: rgba(0, 229, 154, 0.25);
+–red: #FF4466;
+–red-dim: rgba(255, 68, 102, 0.12);
+–radius: 14px;
+–radius-sm: 8px;
+–radius-pill: 100px;
+–font: ‘DM Sans’, -apple-system, sans-serif;
+–mono: ‘JetBrains Mono’, monospace;
+–max-w: 1200px;
+–transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+font-family: var(–font);
+background: var(–bg-primary);
+color: var(–text-primary);
+line-height: 1.6;
+-webkit-font-smoothing: antialiased;
+overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.container { max-width: var(–max-w); margin: 0 auto; padding: 0 24px; }
+
+/* ========== BUTTONS ========== */
+.btn {
+display: inline-flex; align-items: center; gap: 8px;
+padding: 12px 28px; border-radius: var(–radius-pill);
+font-family: var(–font); font-size: 15px; font-weight: 600;
+cursor: pointer; border: none; transition: var(–transition);
+text-decoration: none;
+}
+.btn-primary {
+background: var(–accent); color: #0A0A0F;
+}
+.btn-primary:hover { box-shadow: 0 0 30px var(–accent-glow); transform: translateY(-1px); }
+.btn-secondary {
+background: transparent; color: var(–text-primary);
+border: 1px solid var(–border-light);
+}
+.btn-secondary:hover { border-color: var(–accent); color: var(–accent); }
+
+/* ========== NAV ========== */
+nav {
+position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(20px);
+border-bottom: 1px solid var(–border);
+}
+.nav-inner {
+max-width: var(–max-w); margin: 0 auto; padding: 0 24px;
+display: flex; align-items: center; justify-content: space-between;
+height: 64px;
+}
+.nav-logo {
+font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+display: flex; align-items: center; gap: 8px;
+}
+.nav-logo span { color: var(–accent); }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a {
+font-size: 14px; color: var(–text-secondary); font-weight: 500;
+transition: var(–transition);
+}
+.nav-links a:hover { color: var(–text-primary); }
+.nav-actions { display: flex; gap: 12px; }
+.nav-actions .btn { padding: 8px 20px; font-size: 13px; }
+
+.mobile-toggle { display: none; background: none; border: none; color: var(–text-primary); cursor: pointer; }
+
+/* ========== HERO ========== */
+.hero {
+padding: 160px 0 100px;
+text-align: center;
+position: relative;
+overflow: hidden;
+}
+.hero::before {
+content: ‘’;
+position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+width: 800px; height: 800px;
+background: radial-gradient(circle, var(–accent-glow) 0%, transparent 70%);
+opacity: 0.15; pointer-events: none;
+}
+.hero-badge {
+display: inline-flex; align-items: center; gap: 8px;
+padding: 6px 16px; border-radius: var(–radius-pill);
+background: var(–accent-dim); border: 1px solid rgba(0,229,154,0.2);
+font-size: 13px; font-weight: 600; color: var(–accent);
+margin-bottom: 32px;
+animation: fadeInUp 0.6s ease-out;
+}
+.hero-badge::before {
+content: ‘’; width: 8px; height: 8px; border-radius: 50%;
+background: var(–accent); animation: pulse 2s infinite;
+}
+@keyframes pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.4; }
+}
+@keyframes fadeInUp {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+.hero h1 {
+font-size: clamp(36px, 5vw, 64px); font-weight: 800;
+line-height: 1.08; letter-spacing: -2px;
+max-width: 800px; margin: 0 auto 24px;
+animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+.hero h1 em {
+font-style: normal;
+background: linear-gradient(135deg, var(–accent), #00B87A);
+-webkit-background-clip: text; -webkit-text-fill-color: transparent;
+background-clip: text;
+}
+.hero p {
+font-size: 18px; color: var(–text-secondary); max-width: 640px;
+margin: 0 auto 40px; line-height: 1.7;
+animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+.hero-actions {
+display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+/* ========== SECTION COMMON ========== */
+section { padding: 100px 0; }
+.section-label {
+display: inline-flex; align-items: center; gap: 8px;
+font-size: 13px; font-weight: 600; color: var(–accent);
+text-transform: uppercase; letter-spacing: 1.5px;
+margin-bottom: 16px;
+}
+.section-label::before {
+content: ‘’; width: 20px; height: 1px; background: var(–accent);
+}
+.section-title {
+font-size: clamp(28px, 3.5vw, 44px); font-weight: 700;
+line-height: 1.15; letter-spacing: -1px; margin-bottom: 16px;
+}
+.section-subtitle {
+font-size: 17px; color: var(–text-secondary); max-width: 600px;
+line-height: 1.7;
+}
+.section-header { margin-bottom: 56px; }
+.section-header.center { text-align: center; }
+.section-header.center .section-subtitle { margin: 0 auto; }
+
+/* ========== CARD ========== */
+.card {
+background: var(–bg-card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 32px;
+transition: var(–transition);
+}
+.card:hover { border-color: var(–border-light); background: var(–bg-card-hover); }
+
+/* ========== FLOW SECTION ========== */
+.flow-section { background: var(–bg-secondary); }
+.flow-grid {
+display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+gap: 20px;
+}
+.flow-step {
+position: relative;
+}
+.flow-step .step-num {
+width: 36px; height: 36px; border-radius: 50%;
+background: var(–accent-dim); color: var(–accent);
+display: flex; align-items: center; justify-content: center;
+font-size: 14px; font-weight: 700; margin-bottom: 16px;
+}
+.flow-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.flow-step p { font-size: 14px; color: var(–text-secondary); line-height: 1.6; }
+
+/* ========== CONCIERGE COMPARISON ========== */
+.comparison-grid {
+display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+}
+.comparison-col { padding: 32px; border-radius: var(–radius); }
+.comparison-col.booking { background: var(–bg-card); border: 1px solid var(–border); }
+.comparison-col.traditional { background: var(–bg-card); border: 1px solid var(–border); }
+.comparison-col.runrelay {
+background: var(–bg-card);
+border: 2px solid var(–accent);
+box-shadow: 0 0 40px rgba(0,229,154,0.08);
+position: relative;
+}
+.comparison-col.runrelay::before {
+content: ‘RECOMMENDED’;
+position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+background: var(–accent); color: #0A0A0F;
+padding: 4px 14px; border-radius: var(–radius-pill);
+font-size: 11px; font-weight: 700; letter-spacing: 1px;
+}
+.comparison-col h3 {
+font-size: 18px; font-weight: 700; margin-bottom: 8px;
+}
+.comparison-col .col-desc {
+font-size: 13px; color: var(–text-muted); margin-bottom: 24px;
+padding-bottom: 20px; border-bottom: 1px solid var(–border);
+}
+.comparison-col ul { list-style: none; }
+.comparison-col ul li {
+font-size: 14px; color: var(–text-secondary);
+padding: 8px 0; display: flex; align-items: flex-start; gap: 10px;
+}
+.comparison-col ul li::before {
+content: ‘×’; color: var(–text-muted); font-weight: 700; flex-shrink: 0;
+width: 20px; text-align: center;
+}
+.comparison-col.runrelay ul li::before {
+content: ‘✓’; color: var(–accent);
+}
+
+/* ========== WHEN THINGS GO WRONG ========== */
+.wrong-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+.wrong-card {
+border-radius: var(–radius); padding: 36px;
+position: relative; overflow: hidden;
+}
+.wrong-card.bad {
+background: var(–bg-card); border: 1px solid var(–red);
+border-color: rgba(255,68,102,0.3);
+}
+.wrong-card.good {
+background: var(–bg-card); border: 1px solid var(–accent);
+border-color: rgba(0,229,154,0.3);
+}
+.wrong-card .card-header {
+display: flex; align-items: center; justify-content: space-between;
+margin-bottom: 28px;
+}
+.wrong-card .card-header h3 { font-size: 18px; font-weight: 700; }
+.wrong-card .time-badge {
+padding: 4px 14px; border-radius: var(–radius-pill);
+font-size: 13px; font-weight: 700;
+}
+.wrong-card.bad .time-badge { background: var(–red-dim); color: var(–red); }
+.wrong-card.good .time-badge { background: var(–accent-dim); color: var(–accent); }
+.wrong-card ol {
+list-style: none; counter-reset: step;
+}
+.wrong-card ol li {
+counter-increment: step;
+padding: 12px 0; font-size: 14px; color: var(–text-secondary);
+display: flex; align-items: flex-start; gap: 14px;
+border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.wrong-card ol li:last-child { border-bottom: none; }
+.wrong-card ol li::before {
+content: counter(step);
+width: 28px; height: 28px; border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.wrong-card.bad ol li::before { background: var(–red-dim); color: var(–red); }
+.wrong-card.good ol li::before { background: var(–accent-dim); color: var(–accent); }
+
+/* ========== INTENT TO REVENUE ========== */
+.intent-section { background: var(–bg-secondary); }
+.intent-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+}
+.intent-text h2 {
+font-size: clamp(26px, 3vw, 38px); font-weight: 700;
+line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 16px;
+}
+.intent-text p {
+font-size: 16px; color: var(–text-secondary); line-height: 1.7;
+}
+.intent-table {
+border-radius: var(–radius); overflow: hidden;
+border: 1px solid var(–border);
+}
+.intent-table .row {
+display: grid; grid-template-columns: 1fr 40px 1fr;
+align-items: center;
+padding: 16px 24px;
+background: var(–bg-card);
+border-bottom: 1px solid var(–border);
+transition: var(–transition);
+}
+.intent-table .row:last-child { border-bottom: none; }
+.intent-table .row:hover { background: var(–bg-card-hover); }
+.intent-table .row .trigger {
+font-size: 14px; font-weight: 500; color: var(–text-primary);
+}
+.intent-table .row .arrow {
+color: var(–accent); text-align: center; font-size: 16px;
+}
+.intent-table .row .revenue {
+font-size: 14px; font-weight: 600; color: var(–accent);
+}
+.intent-table .table-header {
+background: rgba(0,229,154,0.06);
+}
+.intent-table .table-header .trigger,
+.intent-table .table-header .revenue {
+font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+color: var(–text-muted); font-weight: 600;
+}
+.intent-table .table-header .arrow { color: var(–text-muted); }
+
+/* ========== WHITE LABEL ========== */
+.wl-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+.wl-card h3 {
+font-size: 18px; font-weight: 700; margin-bottom: 20px;
+display: flex; align-items: center; gap: 10px;
+}
+.wl-card h3 .icon {
+width: 32px; height: 32px; border-radius: var(–radius-sm);
+display: flex; align-items: center; justify-content: center;
+font-size: 16px;
+}
+.wl-card.gets h3 .icon { background: var(–accent-dim); }
+.wl-card.why h3 .icon { background: rgba(120,100,255,0.12); }
+.wl-tag {
+display: inline-flex; padding: 8px 16px; border-radius: var(–radius-sm);
+font-size: 13px; font-weight: 500; color: var(–text-secondary);
+background: var(–bg-primary); border: 1px solid var(–border);
+margin: 0 6px 8px 0;
+}
+.wl-stat-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;
+}
+.wl-stat {
+padding: 16px; border-radius: var(–radius-sm);
+background: var(–bg-primary); border: 1px solid var(–border);
+}
+.wl-stat .num {
+font-size: 24px; font-weight: 800; color: var(–accent);
+letter-spacing: -1px;
+}
+.wl-stat .label {
+font-size: 12px; color: var(–text-muted); margin-top: 4px;
+}
+
+/* ========== AGGREGATION STRIP ========== */
+.agg-strip {
+padding: 40px 0;
+border-top: 1px solid var(–border); border-bottom: 1px solid var(–border);
+background: var(–bg-secondary);
+}
+.agg-strip .container { text-align: center; }
+.agg-strip .strip-label {
+font-size: 12px; text-transform: uppercase; letter-spacing: 2px;
+color: var(–text-muted); font-weight: 600; margin-bottom: 20px;
+}
+.agg-pills {
+display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+}
+.agg-pill {
+padding: 10px 22px; border-radius: var(–radius-pill);
+background: var(–bg-card); border: 1px solid var(–border);
+font-size: 14px; font-weight: 500; color: var(–text-secondary);
+transition: var(–transition); cursor: default;
+}
+.agg-pill:hover { border-color: var(–accent); color: var(–accent); background: var(–accent-dim); }
+
+/* ========== WEBSDK ========== */
+.websdk-section { background: var(–bg-secondary); }
+.websdk-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+}
+.websdk-features {
+display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;
+}
+.websdk-feat {
+padding: 16px; border-radius: var(–radius-sm);
+background: var(–bg-card); border: 1px solid var(–border);
+}
+.websdk-feat h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.websdk-feat p { font-size: 12px; color: var(–text-muted); }
+.websdk-visual {
+background: var(–bg-card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 32px; position: relative;
+overflow: hidden;
+}
+.websdk-visual .mock-bar {
+display: flex; align-items: center; gap: 10px;
+padding: 12px 16px; background: var(–bg-primary);
+border-radius: var(–radius-sm); margin-bottom: 16px;
+border: 1px solid var(–border);
+}
+.websdk-visual .mock-bar .brand-dot {
+width: 28px; height: 28px; border-radius: 6px;
+background: linear-gradient(135deg, #4466FF, #7744FF);
+display: flex; align-items: center; justify-content: center;
+font-size: 11px; font-weight: 700; color: #fff;
+}
+.websdk-visual .mock-bar span { font-size: 13px; color: var(–text-secondary); }
+.websdk-mock-cards { display: flex; flex-direction: column; gap: 10px; }
+.websdk-mock-card {
+display: flex; align-items: center; justify-content: space-between;
+padding: 14px 16px; background: var(–bg-primary);
+border-radius: var(–radius-sm); border: 1px solid var(–border);
+}
+.websdk-mock-card .route { font-size: 14px; font-weight: 600; }
+.websdk-mock-card .route span { color: var(–accent); margin: 0 6px; font-size: 12px; }
+.websdk-mock-card .price { font-size: 14px; font-weight: 700; color: var(–accent); }
+.websdk-mock-card .meta { font-size: 11px; color: var(–text-muted); }
+.websdk-visual .powered-by {
+text-align: center; margin-top: 16px;
+font-size: 11px; color: var(–text-muted); letter-spacing: 0.5px;
+}
+.websdk-visual .powered-by em { color: var(–accent); font-style: normal; font-weight: 600; }
+
+/* ========== WL VARIATIONS ========== */
+.wl-variations {
+display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+margin-top: 40px;
+}
+.wl-var-card {
+background: var(–bg-card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 28px;
+transition: var(–transition); position: relative;
+}
+.wl-var-card:hover { border-color: var(–border-light); }
+.wl-var-card.featured {
+border-color: var(–accent);
+box-shadow: 0 0 30px rgba(0,229,154,0.06);
+}
+.wl-var-card.featured::after {
+content: ‘MOST POPULAR’;
+position: absolute; top: -10px; right: 20px;
+background: var(–accent); color: #0A0A0F;
+padding: 3px 12px; border-radius: var(–radius-pill);
+font-size: 10px; font-weight: 700; letter-spacing: 1px;
+}
+.wl-var-card .var-icon {
+font-size: 28px; margin-bottom: 16px;
+}
+.wl-var-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.wl-var-card .var-desc { font-size: 13px; color: var(–text-muted); margin-bottom: 20px; }
+.wl-var-card ul { list-style: none; }
+.wl-var-card ul li {
+font-size: 13px; color: var(–text-secondary); padding: 6px 0;
+display: flex; align-items: center; gap: 8px;
+}
+.wl-var-card ul li::before {
+content: ‘✓’; color: var(–accent); font-weight: 700; font-size: 12px;
+}
+button.var-cta {
+width: 100%; cursor: pointer; font-family: var(–font);
+}
+.wl-var-card .var-cta {
+display: block; text-align: center; margin-top: 20px;
+padding: 10px; border-radius: var(–radius-sm);
+font-size: 13px; font-weight: 600;
+border: 1px solid var(–border); color: var(–text-secondary);
+transition: var(–transition);
+}
+.wl-var-card .var-cta:hover { border-color: var(–accent); color: var(–accent); }
+.wl-var-card.featured .var-cta {
+background: var(–accent); color: #0A0A0F; border-color: var(–accent);
+}
+.wl-var-card.featured .var-cta:hover { box-shadow: 0 0 20px var(–accent-glow); }
+
+@media (max-width: 900px) {
+.websdk-grid { grid-template-columns: 1fr; }
+.wl-variations { grid-template-columns: 1fr; }
+}
+
+/* ========== SERVICES ========== */
+.services-grid {
+display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+gap: 20px;
+}
+.service-card .service-icon {
+width: 44px; height: 44px; border-radius: 12px;
+background: var(–accent-dim); color: var(–accent);
+display: flex; align-items: center; justify-content: center;
+font-size: 20px; margin-bottom: 16px;
+}
+.service-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.service-card p { font-size: 14px; color: var(–text-secondary); line-height: 1.6; }
+
+/* ========== HOW IT WORKS ========== */
+.how-section { background: var(–bg-secondary); }
+.how-grid {
+display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.how-step { text-align: center; }
+.how-step .step-icon {
+width: 64px; height: 64px; border-radius: 50%;
+background: var(–accent-dim); color: var(–accent);
+display: flex; align-items: center; justify-content: center;
+font-size: 24px; margin: 0 auto 20px; font-weight: 700;
+}
+.how-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.how-step p { font-size: 14px; color: var(–text-secondary); line-height: 1.6; }
+
+/* ========== API / CODE ========== */
+.api-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
+}
+.api-text h2 {
+font-size: clamp(26px, 3vw, 38px); font-weight: 700;
+line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 16px;
+}
+.api-text p { font-size: 16px; color: var(–text-secondary); line-height: 1.7; margin-bottom: 24px; }
+.code-block {
+background: #0D0D14; border: 1px solid var(–border);
+border-radius: var(–radius); padding: 24px; overflow-x: auto;
+}
+.code-block .code-header {
+display: flex; align-items: center; gap: 8px;
+margin-bottom: 16px; padding-bottom: 12px;
+border-bottom: 1px solid var(–border);
+}
+.code-block .dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-block .dot.r { background: #FF5F57; }
+.code-block .dot.y { background: #FEBC2E; }
+.code-block .dot.g { background: #28C840; }
+.code-block pre {
+font-family: var(–mono); font-size: 13px; line-height: 1.7;
+color: var(–text-secondary);
+}
+.code-block pre .kw { color: #C792EA; }
+.code-block pre .str { color: var(–accent); }
+.code-block pre .fn { color: #82AAFF; }
+.code-block pre .cm { color: #546E7A; }
+
+/* ========== USE CASES ========== */
+.usecases-grid {
+display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+gap: 20px;
+}
+.usecase-card {
+position: relative; overflow: hidden;
+}
+.usecase-card .uc-label {
+font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+color: var(–accent); font-weight: 600; margin-bottom: 12px;
+}
+.usecase-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.usecase-card p { font-size: 14px; color: var(–text-secondary); line-height: 1.6; }
+
+/* ========== TRUST ========== */
+.trust-section { background: var(–bg-secondary); }
+.trust-grid {
+display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 20px;
+}
+.trust-item { text-align: center; padding: 24px; }
+.trust-item .trust-icon {
+width: 48px; height: 48px; border-radius: 12px;
+background: var(–accent-dim); color: var(–accent);
+display: flex; align-items: center; justify-content: center;
+font-size: 20px; margin: 0 auto 14px;
+}
+.trust-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.trust-item p { font-size: 13px; color: var(–text-secondary); }
+
+/* ========== STATS ========== */
+.stats-strip {
+padding: 60px 0;
+border-top: 1px solid var(–border);
+border-bottom: 1px solid var(–border);
+}
+.stats-grid {
+display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+text-align: center;
+}
+.stat-item .stat-num {
+font-size: 42px; font-weight: 800; color: var(–accent);
+letter-spacing: -2px; line-height: 1;
+}
+.stat-item .stat-label {
+font-size: 14px; color: var(–text-secondary); margin-top: 8px;
+}
+
+/* ========== CTA ========== */
+.cta-section {
+text-align: center;
+position: relative; overflow: hidden;
+}
+.cta-section::before {
+content: ‘’;
+position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
+width: 600px; height: 600px;
+background: radial-gradient(circle, var(–accent-glow) 0%, transparent 70%);
+opacity: 0.1; pointer-events: none;
+}
+.cta-section h2 {
+font-size: clamp(28px, 3.5vw, 44px); font-weight: 700;
+line-height: 1.15; letter-spacing: -1px; margin-bottom: 16px;
+}
+.cta-section p {
+font-size: 17px; color: var(–text-secondary); margin-bottom: 36px;
+max-width: 500px; margin-left: auto; margin-right: auto;
+}
+.cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+/* ========== FOOTER ========== */
+footer {
+padding: 60px 0 40px;
+border-top: 1px solid var(–border);
+}
+.footer-grid {
+display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+margin-bottom: 40px;
+}
+.footer-brand .footer-logo {
+font-size: 20px; font-weight: 700; margin-bottom: 12px;
+}
+.footer-brand .footer-logo span { color: var(–accent); }
+.footer-brand p { font-size: 14px; color: var(–text-secondary); max-width: 280px; line-height: 1.6; }
+.footer-col h4 {
+font-size: 13px; font-weight: 600; text-transform: uppercase;
+letter-spacing: 1px; color: var(–text-muted); margin-bottom: 16px;
+}
+.footer-col a {
+display: block; font-size: 14px; color: var(–text-secondary);
+padding: 4px 0; transition: var(–transition);
+}
+.footer-col a:hover { color: var(–accent); }
+.footer-bottom {
+padding-top: 24px; border-top: 1px solid var(–border);
+display: flex; justify-content: space-between; align-items: center;
+font-size: 13px; color: var(–text-muted);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 900px) {
+.nav-links { display: none; }
+.mobile-toggle { display: flex; }
+.comparison-grid { grid-template-columns: 1fr; }
+.wrong-grid { grid-template-columns: 1fr; }
+.intent-grid { grid-template-columns: 1fr; }
+.wl-grid { grid-template-columns: 1fr; }
+.api-grid { grid-template-columns: 1fr; }
+.how-grid { grid-template-columns: 1fr; }
+.stats-grid { grid-template-columns: repeat(2, 1fr); }
+.footer-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+.hero { padding: 130px 0 60px; }
+section { padding: 64px 0; }
+.stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.footer-grid { grid-template-columns: 1fr; }
+.footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- ==================== NAV ==================== -->
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo" style="cursor:pointer;" onclick="window.scrollTo({top:0,behavior:'smooth'})">Run<span>Relay</span></span>
+    <div class="nav-links">
+      <a href="#flow">How It Works</a>
+      <a href="#why-us">Why Us</a>
+      <a href="#services">Services</a>
+      <a href="#white-label">White Label</a>
+      <a href="#websdk">WebSDK</a>
+      <a href="#api">API</a>
+      <a href="#use-cases">Use Cases</a>
+    </div>
+    <div class="nav-actions">
+      <button onclick="openModal('demo')" class="btn btn-secondary">Book a Demo</button>
+      <button onclick="openModal('api')" class="btn btn-primary">Get API Access</button>
+    </div>
+    <button class="mobile-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">Live with paying clients</div>
+    <h1>We don't give you tools.<br>We <em>get things done.</em></h1>
+    <p>Real-time execution with human concierge 24/7. Flights, hotels, payments, logistics — handled end-to-end for banks, platforms, and AI agents.</p>
+    <div class="hero-actions">
+      <button onclick="openModal('api')" class="btn btn-primary">Get API Access →</button>
+      <button onclick="openModal('demo')" class="btn btn-secondary">Book a Demo</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FLOW ==================== -->
+
+<section class="flow-section" id="flow">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">From intent to execution in seconds</h2>
+      <p class="section-subtitle">One API call. Full lifecycle. Human oversight at every step.</p>
+    </div>
+    <div class="flow-grid">
+      <div class="card flow-step">
+        <div class="step-num">1</div>
+        <h3>Client sends intent</h3>
+        <p>Through your app, chatbot, or API. "I need a flight to London tomorrow."</p>
+      </div>
+      <div class="card flow-step">
+        <div class="step-num">2</div>
+        <h3>RunRelay processes</h3>
+        <p>We search GDS/NDC, hotels, lounges, insurance — and build a complete offer in real-time.</p>
+      </div>
+      <div class="card flow-step">
+        <div class="step-num">3</div>
+        <h3>Concierge validates</h3>
+        <p>Human concierge verifies details, optimizes pricing, and handles edge cases 24/7.</p>
+      </div>
+      <div class="card flow-step">
+        <div class="step-num">4</div>
+        <h3>Client confirms</h3>
+        <p>One tap. Everything is booked, paid, and confirmed. Tickets and vouchers delivered instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CONCIERGE COMPARISON ==================== -->
+
+<section id="why-us">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">Why Us</div>
+      <h2 class="section-title">Real concierge, not a booking tool</h2>
+      <p class="section-subtitle">See how RunRelay compares to what's out there.</p>
+    </div>
+    <div class="comparison-grid">
+      <!-- Booking Platforms -->
+      <div class="comparison-col booking">
+        <h3>Booking Platforms</h3>
+        <p class="col-desc">Self-service. Client does everything.</p>
+        <ul>
+          <li>Client searches manually</li>
+          <li>Client compares options alone</li>
+          <li>Client handles payment</li>
+          <li>Client manages changes</li>
+          <li>No human assistance</li>
+          <li>Limited to platform inventory</li>
+        </ul>
+      </div>
+      <!-- Traditional Concierge -->
+      <div class="comparison-col traditional">
+        <h3>Traditional Concierge</h3>
+        <p class="col-desc">Slow, expensive, no tech layer.</p>
+        <ul>
+          <li>Email/phone only, slow response</li>
+          <li>Manual search, limited inventory</li>
+          <li>No real-time pricing</li>
+          <li>No API integration</li>
+          <li>High cost per request</li>
+          <li>Business hours only</li>
+        </ul>
+      </div>
+      <!-- RunRelay -->
+      <div class="comparison-col runrelay">
+        <h3>RunRelay</h3>
+        <p class="col-desc">Real-time execution. Human + AI. 24/7.</p>
+        <ul>
+          <li>Real-time search across GDS/NDC</li>
+          <li>AI-optimized options + human check</li>
+          <li>Seamless payment processing</li>
+          <li>Changes handled on the fly</li>
+          <li>24/7 human concierge</li>
+          <li>Full API for any platform</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== WHEN THINGS GO WRONG ==================== -->
+
+<section style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">The Real Test</div>
+      <h2 class="section-title">When things go wrong</h2>
+      <p class="section-subtitle">Cancelled flight. Missed connection. That's when the difference shows.</p>
+    </div>
+    <div class="wrong-grid">
+      <!-- Bad scenario -->
+      <div class="wrong-card bad">
+        <div class="card-header">
+          <h3>With a booking platform</h3>
+          <span class="time-badge">⏱ 2–4 hours</span>
+        </div>
+        <ol>
+          <li>Flight cancelled — client gets a generic email notification</li>
+          <li>Client calls airline — 45 min hold, no available agent</li>
+          <li>Client searches new flights manually on multiple sites</li>
+          <li>Client rebooks, re-enters payment, hopes hotel is flexible</li>
+          <li>Client calls hotel separately to change check-in date</li>
+        </ol>
+      </div>
+      <!-- Good scenario -->
+      <div class="wrong-card good">
+        <div class="card-header">
+          <h3>With RunRelay</h3>
+          <span class="time-badge">⏱ 12 minutes</span>
+        </div>
+        <ol>
+          <li>RunRelay detects disruption in real-time via GDS feed</li>
+          <li>Concierge finds 3 alternative flights + adjusts hotel</li>
+          <li>Client gets a single message with options</li>
+          <li>Client confirms — everything reboked and paid instantly</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== INTENT TO REVENUE ==================== -->
+
+<section class="intent-section">
+  <div class="container">
+    <div class="intent-grid">
+      <div class="intent-text">
+        <div class="section-label">Intent-to-Revenue Pipeline</div>
+        <h2>Execution tells you what your clients need — before they ask.</h2>
+        <p>Every booking is a signal. RunRelay maps client actions to revenue opportunities your bank can capture today.</p>
+      </div>
+      <div class="intent-table">
+        <div class="row table-header">
+          <span class="trigger">Client Action</span>
+          <span class="arrow">→</span>
+          <span class="revenue">Revenue Signal</span>
+        </div>
+        <div class="row">
+          <span class="trigger">Property viewings</span>
+          <span class="arrow">→</span>
+          <span class="revenue">Mortgage</span>
+        </div>
+        <div class="row">
+          <span class="trigger">International trip</span>
+          <span class="arrow">→</span>
+          <span class="revenue">Travel Insurance</span>
+        </div>
+        <div class="row">
+          <span class="trigger">Car test-drive</span>
+          <span class="arrow">→</span>
+          <span class="revenue">Auto Loan</span>
+        </div>
+        <div class="row">
+          <span class="trigger">VIP cashout</span>
+          <span class="arrow">→</span>
+          <span class="revenue">Wealth Management</span>
+        </div>
+        <div class="row">
+          <span class="trigger">Relocation</span>
+          <span class="arrow">→</span>
+          <span class="revenue">Home Loan</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== WHITE LABEL ==================== -->
+
+<section id="white-label">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">White Label</div>
+      <h2 class="section-title">Turnkey lifestyle platform<br>for any bank in 2 weeks</h2>
+      <p class="section-subtitle">Your brand. Our infrastructure. Zero development required.</p>
+    </div>
+    <div class="wl-grid">
+      <div class="card wl-card gets">
+        <h3><span class="icon">📦</span> What the bank gets</h3>
+        <div>
+          <span class="wl-tag">Branded travel portal</span>
+          <span class="wl-tag">Flights + Hotels + Lounges</span>
+          <span class="wl-tag">eSIM for travellers</span>
+          <span class="wl-tag">Travel Insurance</span>
+          <span class="wl-tag">Concierge chat 24/7</span>
+          <span class="wl-tag">Full audit trail</span>
+          <span class="wl-tag">Intent signals dashboard</span>
+        </div>
+      </div>
+      <div class="card wl-card why">
+        <h3><span class="icon">⚡</span> Why banks buy</h3>
+        <div class="wl-stat-grid">
+          <div class="wl-stat">
+            <div class="num">0</div>
+            <div class="label">Dev effort required</div>
+          </div>
+          <div class="wl-stat">
+            <div class="num">3×</div>
+            <div class="label">Client retention</div>
+          </div>
+          <div class="wl-stat">
+            <div class="num">18mo</div>
+            <div class="label">Time-to-market saved</div>
+          </div>
+          <div class="wl-stat">
+            <div class="num">New</div>
+            <div class="label">Revenue stream</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+```
+<!-- WL VARIATIONS -->
+<div class="wl-variations">
+  <div class="wl-var-card">
+    <div class="var-icon">🚀</div>
+    <h3>Embedded SDK</h3>
+    <p class="var-desc">Drop our WebSDK into your existing app. Fastest path to live.</p>
+    <ul>
+      <li>3 lines of code to integrate</li>
+      <li>Your brand, colors & fonts</li>
+      <li>Search, book & manage flows</li>
+      <li>Concierge chat built-in</li>
+      <li>Event hooks for analytics</li>
+      <li>SSO / token-based auth</li>
+    </ul>
+    <button onclick="openModal('sdk')" class="var-cta">Learn more →</button>
+  </div>
+  <div class="wl-var-card featured">
+    <div class="var-icon">🏦</div>
+    <h3>Branded Portal</h3>
+    <p class="var-desc">Standalone lifestyle platform under your brand. Fully managed.</p>
+    <ul>
+      <li>Custom domain & branding</li>
+      <li>Flights + Hotels + Lounges + eSIM</li>
+      <li>Insurance & transfers</li>
+      <li>24/7 concierge chat</li>
+      <li>Intent signals dashboard</li>
+      <li>Full audit trail & compliance</li>
+    </ul>
+    <button onclick="openModal('portal')" class="var-cta">Book a demo →</button>
+  </div>
+  <div class="wl-var-card">
+    <div class="var-icon">🤖</div>
+    <h3>API-Only</h3>
+    <p class="var-desc">Pure execution API. Build your own UI, we handle the backend.</p>
+    <ul>
+      <li>REST API with full docs</li>
+      <li>Sandbox environment</li>
+      <li>Webhook notifications</li>
+      <li>Concierge via API channel</li>
+      <li>Multi-currency payments</li>
+      <li>Custom approval flows</li>
+    </ul>
+    <button onclick="openModal('api')" class="var-cta">Get API access →</button>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ==================== AGGREGATION STRIP ==================== -->
+
+<div class="agg-strip">
+  <div class="container">
+    <div class="strip-label">Aggregated services</div>
+    <div class="agg-pills">
+      <span class="agg-pill">✈️ Flights (GDS/NDC)</span>
+      <span class="agg-pill">🏨 Hotels</span>
+      <span class="agg-pill">🛋️ Airport Lounges</span>
+      <span class="agg-pill">📱 eSIM</span>
+      <span class="agg-pill">🛡️ Travel Insurance</span>
+      <span class="agg-pill">🚗 Transfers</span>
+      <span class="agg-pill">🍽️ Restaurants</span>
+      <span class="agg-pill">🎫 Events & Tickets</span>
+      <span class="agg-pill">📄 Visa & Documents</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SERVICES ==================== -->
+
+<section id="services">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">Services</div>
+      <h2 class="section-title">Everything your client needs. One API.</h2>
+      <p class="section-subtitle">Full-stack travel and lifestyle execution layer.</p>
+    </div>
+    <div class="services-grid">
+      <div class="card service-card">
+        <div class="service-icon">✈️</div>
+        <h3>Flights</h3>
+        <p>GDS + NDC aggregation. Real-time pricing, instant ticketing, and rebooking handled by concierge.</p>
+      </div>
+      <div class="card service-card">
+        <div class="service-icon">🏨</div>
+        <h3>Hotels</h3>
+        <p>Global inventory across all major chains and boutique properties. Best rate guarantee.</p>
+      </div>
+      <div class="card service-card">
+        <div class="service-icon">🛋️</div>
+        <h3>Airport Lounges</h3>
+        <p>Access to 1,300+ lounges worldwide. Digital passes delivered instantly to the client.</p>
+      </div>
+      <div class="card service-card">
+        <div class="service-icon">📱</div>
+        <h3>eSIM</h3>
+        <p>Data connectivity in 190+ countries. Activated before the client even lands.</p>
+      </div>
+      <div class="card service-card">
+        <div class="service-icon">🛡️</div>
+        <h3>Insurance</h3>
+        <p>Travel insurance bundled at checkout. Real-time claims support through concierge.</p>
+      </div>
+      <div class="card service-card">
+        <div class="service-icon">🚗</div>
+        <h3>Transfers</h3>
+        <p>Airport pickups, intercity transfers, and VIP car service. All coordinated seamlessly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== HOW IT WORKS (DETAILED) ==================== -->
+
+<section class="how-section">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">Integration</div>
+      <h2 class="section-title">Live in 3 steps</h2>
+      <p class="section-subtitle">Plug RunRelay into your stack — no frontend required.</p>
+    </div>
+    <div class="how-grid">
+      <div class="card how-step">
+        <div class="step-icon">1</div>
+        <h3>Connect your API</h3>
+        <p>Single REST endpoint. Send client intent, get structured results. Full documentation and sandbox included.</p>
+      </div>
+      <div class="card how-step">
+        <div class="step-icon">2</div>
+        <h3>Configure your brand</h3>
+        <p>Customize UI, set business rules, define approval flows, and connect payment methods.</p>
+      </div>
+      <div class="card how-step">
+        <div class="step-icon">3</div>
+        <h3>Go live</h3>
+        <p>Your clients get concierge-grade execution. We handle everything behind the scenes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== API / CODE ==================== -->
+
+<section id="api">
+  <div class="container">
+    <div class="api-grid">
+      <div class="api-text">
+        <div class="section-label">API</div>
+        <h2>One call. Full execution.</h2>
+        <p>Send a client intent via REST API. RunRelay handles search, booking, payment, ticketing, and post-booking changes — all through a single integration.</p>
+        <button onclick="openModal('api')" class="btn btn-primary">Get API Access →</button>
+      </div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="dot r"></span>
+          <span class="dot y"></span>
+          <span class="dot g"></span>
+        </div>
+<pre><span class="cm">// Create a travel request</span>
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.runrelay.io/v1/request'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: {
+    <span class="str">'Authorization'</span>: <span class="str">`Bearer ${API_KEY}`</span>,
+    <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>
+  },
+  body: JSON.stringify({
+    client_id: <span class="str">'usr_29xKj3'</span>,
+    intent: <span class="str">'flight'</span>,
+    details: {
+      from: <span class="str">'DXB'</span>,
+      to: <span class="str">'LHR'</span>,
+      date: <span class="str">'2026-03-15'</span>,
+      class: <span class="str">'business'</span>,
+      passengers: <span class="str">1</span>
+    }
+  })
+});
+
+<span class="cm">// Returns: options, pricing, booking link</span>
+<span class="kw">const</span> data = <span class="kw">await</span> response.<span class="fn">json</span>();</pre>
+</div>
+</div>
+
+  </div>
+</section>
+
+<!-- ==================== WEBSDK ==================== -->
+
+<section class="websdk-section" id="websdk">
+  <div class="container">
+    <div class="websdk-grid">
+      <div>
+        <div class="section-label">WebSDK Integration</div>
+        <h2 class="section-title">Embed travel into your app<br>with 3 lines of code</h2>
+        <p class="section-subtitle" style="margin-bottom: 8px;">Drop in our WebSDK — your users get a fully branded booking experience without ever leaving your platform. No iframes. No redirects. Native feel.</p>
+        <div class="websdk-features">
+          <div class="websdk-feat">
+            <h4>🎨 Full white-label</h4>
+            <p>Your brand, fonts, colors. Zero RunRelay branding visible.</p>
+          </div>
+          <div class="websdk-feat">
+            <h4>⚡ &lt;50ms load</h4>
+            <p>Lightweight SDK. Lazy-loaded. No performance hit.</p>
+          </div>
+          <div class="websdk-feat">
+            <h4>🔗 Deep linking</h4>
+            <p>Trigger search, pre-fill routes, pass user context via URL params.</p>
+          </div>
+          <div class="websdk-feat">
+            <h4>📲 Event hooks</h4>
+            <p>onSearch, onBook, onCancel — pipe everything into your analytics.</p>
+          </div>
+          <div class="websdk-feat">
+            <h4>🔐 SSO ready</h4>
+            <p>Token-based auth. Users stay logged in through your identity provider.</p>
+          </div>
+          <div class="websdk-feat">
+            <h4>💬 Concierge built-in</h4>
+            <p>Live chat with human concierge embedded directly in your UI.</p>
+          </div>
+        </div>
+      </div>
+      <div class="websdk-visual">
+        <div class="mock-bar">
+          <div class="brand-dot">YB</div>
+          <span>YourBank — Travel</span>
+        </div>
+        <div class="websdk-mock-cards">
+          <div class="websdk-mock-card">
+            <div>
+              <div class="route">DXB <span>→</span> LHR</div>
+              <div class="meta">Mar 15 · Business · Emirates</div>
+            </div>
+            <div class="price">$2,340</div>
+          </div>
+          <div class="websdk-mock-card">
+            <div>
+              <div class="route">DXB <span>→</span> LHR</div>
+              <div class="meta">Mar 15 · Business · Qatar Airways</div>
+            </div>
+            <div class="price">$2,180</div>
+          </div>
+          <div class="websdk-mock-card">
+            <div>
+              <div class="route">DXB <span>→</span> LHR</div>
+              <div class="meta">Mar 15 · Business · British Airways</div>
+            </div>
+            <div class="price">$2,510</div>
+          </div>
+        </div>
+        <div class="powered-by">Powered by <em>RunRelay</em> · Concierge available 24/7</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== USE CASES ==================== -->
+
+<section style="background: var(--bg-secondary);" id="use-cases">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">Use Cases</div>
+      <h2 class="section-title">Built for platforms that execute</h2>
+      <p class="section-subtitle">Banks, fintechs, and AI agents use RunRelay as their execution layer.</p>
+    </div>
+    <div class="usecases-grid">
+      <div class="card usecase-card">
+        <div class="uc-label">Banking</div>
+        <h3>Premium card lifestyle</h3>
+        <p>Turn your premium card program into a concierge-grade lifestyle platform. Flights, hotels, lounges — handled for your top clients.</p>
+      </div>
+      <div class="card usecase-card">
+        <div class="uc-label">Fintech</div>
+        <h3>Travel-as-a-feature</h3>
+        <p>Embed travel booking natively into your app. No redirects, no third-party UX. Full white label.</p>
+      </div>
+      <div class="card usecase-card">
+        <div class="uc-label">AI Agents</div>
+        <h3>Execution for AI</h3>
+        <p>Your AI agent talks. RunRelay executes. Real-world bookings from conversational interfaces with zero hallucination.</p>
+      </div>
+      <div class="card usecase-card">
+        <div class="uc-label">Corporates</div>
+        <h3>Business travel managed</h3>
+        <p>Policy-compliant booking with audit trail, approval flows, and concierge support for every trip.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== TRUST ==================== -->
+
+<section class="trust-section">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-label">Trust & Compliance</div>
+      <h2 class="section-title">Enterprise-grade from day one</h2>
+    </div>
+    <div class="trust-grid">
+      <div class="card trust-item">
+        <div class="trust-icon">🔒</div>
+        <h4>Bank-grade security</h4>
+        <p>End-to-end encryption. SOC 2 compliance ready.</p>
+      </div>
+      <div class="card trust-item">
+        <div class="trust-icon">📋</div>
+        <h4>Full audit trail</h4>
+        <p>Every action logged and traceable. Compliance-first architecture.</p>
+      </div>
+      <div class="card trust-item">
+        <div class="trust-icon">🌐</div>
+        <h4>Multi-currency</h4>
+        <p>Process payments in 50+ currencies. Local payment methods supported.</p>
+      </div>
+      <div class="card trust-item">
+        <div class="trust-icon">⚡</div>
+        <h4>99.9% uptime</h4>
+        <p>Redundant infrastructure. Your clients never wait.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STATS ==================== -->
+
+<div class="stats-strip">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Human concierge</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">&lt;12m</div>
+        <div class="stat-label">Avg. resolution time</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">190+</div>
+        <div class="stat-label">Countries covered</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">2wk</div>
+        <div class="stat-label">White label go-live</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CTA ==================== -->
+
+<section class="cta-section">
+  <div class="container">
+    <div class="section-label">Ready?</div>
+    <h2>Stop building. Start executing.</h2>
+    <p>Let your clients experience concierge-grade execution. Talk to us today.</p>
+    <div class="cta-actions">
+      <button onclick="openModal('demo')" class="btn btn-primary">Book a Demo →</button>
+      <button onclick="openModal('api')" class="btn btn-secondary">Get API Access</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">Run<span>Relay</span></div>
+        <p>Real-time execution layer for banks, platforms, and AI agents. Human concierge + API. 24/7.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#flow">How It Works</a>
+        <a href="#services">Services</a>
+        <a href="#api">API</a>
+        <a href="#white-label">White Label</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#why-us">Why Us</a>
+        <a href="#use-cases">Use Cases</a>
+        <a href="mailto:info@runrelay.io">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <a href="mailto:info@runrelay.io">info@runrelay.io</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 RunRelay. All rights reserved.</span>
+      <span>Privacy Policy · Terms of Service</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ==================== MODAL FORM ==================== -->
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div id="formContent">
+      <h3 id="modalTitle">Book a Demo</h3>
+      <p class="modal-sub" id="modalSub">We'll get back to you within 2 hours.</p>
+      <div class="form-group">
+        <label>Your name</label>
+        <input type="text" id="formName" placeholder="John Smith">
+      </div>
+      <div class="form-group">
+        <label>Work email</label>
+        <input type="email" id="formEmail" placeholder="john@company.com">
+      </div>
+      <div class="form-group">
+        <label>Company</label>
+        <input type="text" id="formCompany" placeholder="Your company name">
+      </div>
+      <div class="form-group">
+        <label>I'm interested in</label>
+        <select id="formInterest">
+          <option value="demo">Book a Demo</option>
+          <option value="api">API Access</option>
+          <option value="sdk">WebSDK Integration</option>
+          <option value="portal">Branded Portal (White Label)</option>
+          <option value="other">Something else</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Message (optional)</label>
+        <textarea id="formMessage" rows="3" placeholder="Tell us about your use case..."></textarea>
+      </div>
+      <button class="form-submit" onclick="submitForm()">Send Request →</button>
+    </div>
+    <div class="form-success" id="formSuccess">
+      <!-- State 1: Sent successfully (formsubmit worked) -->
+      <div id="successSent" style="display:none;">
+        <div class="check">✓</div>
+        <h4>Request sent!</h4>
+        <p>We'll get back to you within 2 hours at the email you provided.</p>
+        <button class="form-submit" onclick="closeModal()" style="margin-top:16px;background:transparent;color:var(--accent);border:1px solid var(--accent);">Close</button>
+      </div>
+      <!-- State 2: Fallback (formsubmit failed — sandbox or no network) -->
+      <div id="successFallback" style="display:none;">
+        <div class="check">📋</div>
+        <h4>Almost there!</h4>
+        <p>Copy your request and email it to <strong>info@runrelay.io</strong></p>
+        <button class="form-submit" id="copyBtn" onclick="copyRequest()" style="margin-top:16px;">📋 Copy Request to Clipboard</button>
+        <p id="copyConfirm" style="margin-top:12px;font-size:13px;color:var(--accent);display:none;">✓ Copied! Now send an email to info@runrelay.io</p>
+        <textarea id="requestText" readonly style="width:100%;margin-top:16px;padding:14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-family:var(--font);font-size:13px;resize:none;min-height:120px;line-height:1.6;"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openModal(type) {
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const sub = document.getElementById('modalSub');
+  const interest = document.getElementById('formInterest');
+  const formContent = document.getElementById('formContent');
+  const formSuccess = document.getElementById('formSuccess');
+  
+  formContent.style.display = 'block';
+  formSuccess.classList.remove('active');
+  
+  if (type === 'demo') {
+    title.textContent = 'Book a Demo';
+    sub.textContent = "We'll get back to you within 2 hours.";
+    interest.value = 'demo';
+  } else if (type === 'api') {
+    title.textContent = 'Get API Access';
+    sub.textContent = 'Get sandbox credentials and documentation.';
+    interest.value = 'api';
+  } else if (type === 'sdk') {
+    title.textContent = 'WebSDK Integration';
+    sub.textContent = 'Embed RunRelay into your app.';
+    interest.value = 'sdk';
+  } else if (type === 'portal') {
+    title.textContent = 'Branded Portal';
+    sub.textContent = 'White-label lifestyle platform for your brand.';
+    interest.value = 'portal';
+  }
+  
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+  // Reset form state for next open
+  document.getElementById('formContent').style.display = 'block';
+  document.getElementById('formSuccess').classList.remove('active');
+  document.getElementById('successSent').style.display = 'none';
+  document.getElementById('successFallback').style.display = 'none';
+  var btn = document.querySelector('#formContent .form-submit');
+  if (btn) { btn.textContent = 'Send Request \u2192'; btn.disabled = false; }
+}
+
+function submitForm() {
+  var name = document.getElementById('formName').value.trim();
+  var email = document.getElementById('formEmail').value.trim();
+  
+  if (!name || !email) {
+    document.getElementById('formName').style.borderColor = name ? 'var(--border)' : 'var(--red)';
+    document.getElementById('formEmail').style.borderColor = email ? 'var(--border)' : 'var(--red)';
+    return;
+  }
+  
+  var interest = document.getElementById('formInterest').value;
+  var company = document.getElementById('formCompany').value.trim();
+  var message = document.getElementById('formMessage').value.trim();
+
+  var btn = document.querySelector('#formContent .form-submit');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  var requestText = 'Subject: RunRelay - ' + interest + ' request\n\n' +
+    'Hi RunRelay team,\n\n' +
+    'Name: ' + name + '\n' +
+    'Email: ' + email + '\n' +
+    'Company: ' + (company || 'N/A') + '\n' +
+    'Interest: ' + interest + '\n' +
+    'Message: ' + (message || 'N/A') + '\n\n' +
+    'Looking forward to hearing from you.';
+
+  fetch('https://formsubmit.co/ajax/info@runrelay.io', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      name: name, email: email, company: company,
+      interest: interest, message: message || '(no message)',
+      _subject: 'RunRelay - ' + interest + ' request from ' + name,
+      _replyto: email
+    })
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('fail');
+    return res.json();
+  })
+  .then(function() {
+    document.getElementById('formContent').style.display = 'none';
+    document.getElementById('formSuccess').classList.add('active');
+    document.getElementById('successSent').style.display = 'block';
+  })
+  .catch(function() {
+    document.getElementById('requestText').value = requestText;
+    document.getElementById('formContent').style.display = 'none';
+    document.getElementById('formSuccess').classList.add('active');
+    document.getElementById('successFallback').style.display = 'block';
+  });
+}
+
+function copyRequest() {
+  var text = document.getElementById('requestText').value;
+  var btn = document.getElementById('copyBtn');
+  var cfm = document.getElementById('copyConfirm');
+  
+  function onCopied() {
+    btn.textContent = 'Copied!';
+    btn.style.background = '#0A0A0F';
+    btn.style.color = '#00E59A';
+    btn.style.border = '1px solid #00E59A';
+    cfm.style.display = 'block';
+  }
+  function fallbackCopy() {
+    var ta = document.getElementById('requestText');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    onCopied();
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onCopied).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
+}
+
+// Close on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+
+</body>
+</html>
